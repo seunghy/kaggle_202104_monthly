@@ -1,0 +1,20 @@
+{
+    "GBC": {
+        "time": "2021-04-22 13:04:28",
+        "name": "GradientBoosting",
+        "best_param": {
+            "criterion": "friedman_mse",
+            "learning_rate": 0.05,
+            "loss": "deviance",
+            "max_depth": 3,
+            "max_features": "sqrt",
+            "min_samples_leaf": 3,
+            "min_samples_split": 3,
+            "n_estimators": 500,
+            "random_state": 0,
+            "subsample": 0.6,
+            "verbose": 1
+        },
+        "cross_val_score_mean": 0.747227482732597
+    }
+}
