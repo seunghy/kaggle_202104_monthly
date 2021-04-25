@@ -16,5 +16,43 @@
             "verbose": 1
         },
         "cross_val_score_mean": 0.747227482732597
+    },
+    "lgbm": {
+        "time": "2021-04-25 22:09:30.277221",
+        "name": "Lightbm",
+        "best_param": {
+            "boost_from_average": false,
+            "boosting": "dart",
+            "colsample_bytree": 0.6,
+            "device": "cpu",
+            "early_stopping_rounds": 20,
+            "learning_rate": 0.1,
+            "max_bin": 510,
+            "max_depth": -1,
+            "metric": "binary_error",
+            "min_child_samples": 7,
+            "min_child_weight": 1,
+            "min_split_gain": 0.6,
+            "num_iterations": 300,
+            "num_leaves": 50,
+            "objective": "binary",
+            "subsample_for_bin": 200,
+            "verbose": 1
+        },
+        "cross_val_score_mean": 0.7419870627492133,
+        "best_score": 0.74658203125
+    },
+    "Catboost": {
+        "time": "2021-04-26 01:08:37.277108",
+        "name": "Catboosting",
+        "best_param": {
+            "leaf_estimation_iterations": 50,
+            "depth": 5,
+            "random_seed": 0,
+            "l2_leaf_reg": 7,
+            "iterations": 300,
+            "learning_rate": 0.2
+        },
+        "cross_val_score_mean": 0.7432028678697254
     }
 }

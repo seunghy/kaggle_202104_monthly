@@ -252,31 +252,32 @@ lgb = lgbm.LGBMClassifier().fit(x_train, y_train)
 # cross_val_score(lgb, x_val, y_val).mean() #0.7824333333333333
 
 lgbm_params = {
-    'application': ['binary'], # for binary classification
-    'boosting': ['dart'], # traditional gradient boosting decision tree
+    'objective':['binary'],
+    'boost_from_average': [False],
+    'verbose':[1],
+    'boosting': ['dart','gbdt'], # traditional gradient boosting decision tree
     'num_iterations': [300,500], 
     'learning_rate': [0.01,0.05,0.1,0.2],
     'num_leaves': [50,100],
     'device': ['cpu'], 
     'max_depth': [-1], 
     'max_bin': [510], 
-    'lambda_l1': [3,5], # L1 regularization
-    'lambda_l2': [3,5], # L2 regularization
+    # 'lambda_l1': [3,5], # L1 regularization
+    # 'lambda_l2': [3,5], # L2 regularization
     'metric' : ['binary_error'],
     'subsample_for_bin': [100,200], 
-    'subsample': [0.8,1], 
     'colsample_bytree': [0.6,0.8], 
     'min_split_gain': [0.5,0.6], 
     'min_child_weight': [1], 
     'min_child_samples': [5,7],
-    'early_stopping_rounds':[30]
+    'early_stopping_rounds':[20]
 }
 lgbm_grid = grid_search(lgb, lgbm_params)
 
 
-lgbm_fit = lgbm.LGBMClassifier(application='binary',boosting='dart',colsample_bytree=0.8,lambda_l1=3,
-lambda_l2=3, learning_rate=0.2, max_bin=510, max_depth=-1, metric='binary_error',min_child_samples=7,
-min_child_weight=1, min_split_gain=0.6, num_iterations=100, num_leaves=100, subsample=1)
+lgbm_fit = lgbm.LGBMClassifier(boost_from_average=False,boosting='dart',colsample_bytree=0.6,early_stopping_rounds=20,
+learning_rate=0.1, max_bin=510, max_depth=-1, metric='binary_error',min_child_samples=7, min_child_weight=1,
+min_split_gain=0.6, num_iterations=300, num_leavees=50, objective='binary', subsample_for_bin=200)
 lgbm_fit.fit(x_train, y_train)
 
 lgbm_dict = {}
@@ -308,15 +309,26 @@ def catb(x_train, y_train):
 #          }
 
 categorical_indexes = [0,3,5,6]
-cat = catb(categorical_indexes, x_train, y_train, x_val, y_val)
+cat = CatBoostClassifier(cat_features=categorical_indexes).fit(x_train, y_train)
 cross_val_score(cat,x_val, y_val).mean() 
 
-cat_grid = {'iterations':[300,500], 'depth':[3,5,7], 
-'random_seed':[0], 'learning_rate':[0.005,0.01,0.1,0.2], 'l2_leaf_reg':[3,5,7,9],'leaf_estimation_iterations':[10,30]}
+cat_grid = {'iterations':[150,300,500], 'depth':[3,5,7], 
+'random_seed':[0], 'learning_rate':[0.005,0.01,0.1,0.2], 'l2_leaf_reg':[3,5,7,9],'leaf_estimation_iterations':[10,30,50]}
 cat = CatBoostClassifier(cat_features=categorical_indexes)
-cat_grid = cat.grid_search(cat_grid, cv=5, stratified=True, shuffle=True, search_by_train_test_split=True, 
+cat_grid = cat.grid_search(cat_grid, cv=5, stratified=True, shuffle=True, serch_by_train_test_split=True, 
 X=x_train, y=y_train, plot=True) # test의 logloss, std 확인하여 iteration=?? 정함
 
+cat_grid['cv_results'].keys()
+
+
+cat_fit = CatBoostClassifier(cat_features=categorical_indexes, leaf_estimation_iterations=50, depth=5, 
+random_seed=0, l2_leaf_reg=7, iterations=300, learning_rate=0.2)
+cat_fit.fit(x_train, y_train)
+
+cat_dict = {}
+cat_dict['Catboost']= {'time':str(datetime.datetime.now()),'name': 'Catboosting', 
+'best_param':cat_grid['params'],
+'cross_val_score_mean':cross_val_score(cat_fit, x_val, y_val).mean()}
 
 
 # kfold testing
@@ -369,8 +381,7 @@ def make_log(update_dict,  path_):
             data=json.load(f)
         data.update(update_dict)
         with open(path_,'w+') as f:
-            json.dump(update_dict,f)
+            json.dump(data,f)
     else:
         with open(path_, mode='w+') as f:
             json.dump(update_dict,f)
-
