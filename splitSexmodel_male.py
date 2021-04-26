@@ -24,6 +24,7 @@ delete_v = ['PassengerId']
 # For model_male
 train = train[train.Sex=='male'].reset_index(drop=True)
 test = test[test.Sex=='male']
+maleidx = test.PassengerId
 ##################################################################
 
 # label encoding
@@ -183,8 +184,8 @@ test.drop(delete_v, axis=1, inplace=True)
 ''' ----------------------------------'''
 
 # # for submission
-# x_train, y_train = train.iloc[:,1:],train.Survived 
-# x_val = test
+x_train, y_train = train.iloc[:,1:],train.Survived 
+x_val = test
 
 # for validation
 x_train, x_val, y_train, y_val = train_test_split(train.iloc[:,1:],train.Survived, test_size=0.3 ) 
@@ -234,7 +235,8 @@ gbc_grid = grid_search(GBC, gbc_params)
 
 # {'criterion': 'friedman_mse', 'learning_rate': 0.05, 'loss': 'deviance', 'max_depth': 3, 'max_features': 'sqrt', 'min_samples_leaf': 3, 'min_samples_split': 9, 'n_estimators': 300, 'random_state': 0, 'subsample': 0.8, 'verbose': 1}
 # 0.8206929829223931 / 0.8157410157410159
-gbc_fit = GradientBoostingClassifier(criterion='friedman_mse',learning_rate=0.05, loss='deviance',max_depth=3, max_features='sqrt',
+gbc_fit = GradientBoostingClassifier(criterion='friedman_mse',learning_rate=0.05, loss='deviance',
+max_depth=3, max_features='sqrt',
 min_samples_leaf=3, min_samples_split=9, n_estimators=300, subsample=0.8)
 gbc_fit.fit(x_train, y_train)
 
@@ -243,6 +245,7 @@ gbc_dict = {}
 gbc_dict['GBC']= {'time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'name': 'GradientBoosting', 
 'best_param':{'learning_rate': 0.05, 'max_features': 'sqrt', 'min_samples_leaf': 3, 'min_samples_split': 9, 'n_estimators': 300, 'subsample': 0.8},
 'cross_val_score_mean':cross_val_score(gbc_fit, x_val, y_val).mean()}
+
 
 
 # LIGHTGBM
@@ -377,6 +380,13 @@ submission['Survived'] = temp
 submission.to_csv('C:/Users/10188/local_git/tabular-playground-series-apr-2021/submission_files/20210413_GBC_lgbm_cat_freqvoting.csv', index=False)
 
 
+result_survival = np.argmax((gbc_fit.predict_proba(x_val) + lgbm_fit.predict_proba(x_val) + 
+cat_fit.predict_proba(x_val))/3, axis=1)
+result_survival_male = pd.DataFrame({'PassengerId':maleidx, 'Survived':result_survival})
+
+result_survival_total = pd.concat([result_survival_male, result_survival_female], axis=0).sort_values('PassengerId')
+result_survival_total.to_csv('C:/Users/10188/local_git/tabular-playground-series-apr-2021/submission_files/20210426_GBC_lgbm_cat_splitdata.csv', index=False)
+
 '''
 json 저장
 '''
@@ -400,3 +410,14 @@ def make_log(update_dict,  path_):
     else:
         with open(path_, mode='w+') as f:
             json.dump(update_dict,f)
+
+
+
+## submisiion
+
+
+# get submission file
+malesub = pd.DataFrame({'PassengerId':maleidx, 'Survived':gbc_fit.predict(x_val)})
+subfile = pd.concat([malesub, femalesub], axis=0).sort_values('PassengerId')
+
+subfile.to_csv('C:/Users/10188/local_git/tabular-playground-series-apr-2021/submission_files/20210426_GBC_splitdata.csv', index=False)

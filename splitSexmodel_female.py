@@ -23,6 +23,7 @@ delete_v = ['PassengerId']
 # For model_female
 train = train[train.Sex=='female'].reset_index(drop=True)
 test = test[test.Sex=='female']
+femaleidx = test.PassengerId
 ##################################################################
 
 # label encoding
@@ -179,9 +180,9 @@ test.drop(delete_v, axis=1, inplace=True)
 ''' FIT THE MODELS -------------------'''
 ''' ----------------------------------'''
 
-# # for submission
-# x_train, y_train = train.iloc[:,1:],train.Survived 
-# x_val = test
+# for submission
+x_train, y_train = train.iloc[:,1:],train.Survived 
+x_val = test
 
 # for validation
 x_train, x_val, y_train, y_val = train_test_split(train.iloc[:,1:],train.Survived, test_size=0.3 ) 
@@ -229,7 +230,8 @@ gbc_grid = grid_search(GBC, gbc_params)
 gbc_grid.cv_results_['mean_test_score'].mean()
 
 # 500, 0.4148
-gbc_fit = GradientBoostingClassifier(criterion='friedman_mse',learning_rate=0.05, loss='deviance',max_depth=3, max_features='sqrt',
+gbc_fit = GradientBoostingClassifier(criterion='friedman_mse',learning_rate=0.05, loss='deviance',
+max_depth=3, max_features='sqrt',
 min_samples_leaf=3, min_samples_split=3, n_estimators=500, subsample=0.6)
 gbc_fit.fit(x_train, y_train)
 
@@ -352,8 +354,10 @@ kfold(lgb, 7, shuffleox=True, x_train, y_train)
 temp = pd.DataFrame({'gbc':pred, 'lgbm':lgb_pred, 'cat':cat_pred})
 
 
-result_survival = np.argmax((pred_p + lgb_pred_p)/2, axis=1)
-result_survival
+result_survival = np.argmax((gbc_fit.predict_proba(x_val) + lgbm_fit.predict_proba(x_val) + 
+cat_fit.predict_proba(x_val))/3, axis=1)
+result_survival_female = pd.DataFrame({'PassengerId':femaleidx, 'Survived':result_survival})
+
 
 submission = pd.read_csv('C:/Users/10188/local_git/tabular-playground-series-apr-2021/sample_submission.csv')
 submission['Survived'] = temp
@@ -385,3 +389,8 @@ def make_log(update_dict,  path_):
     else:
         with open(path_, mode='w+') as f:
             json.dump(update_dict,f)
+
+
+
+# get sub
+femalesub = pd.DataFrame({'PassengerId':femaleidx, 'Survived':gbc_fit.predict(x_val)})
