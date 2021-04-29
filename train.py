@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import datetime
 # from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 # from pycaret.classification import *
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
@@ -60,16 +61,60 @@ delete_v.extend(['Name','familyname'])
 train.drop(delete_v, axis=1, inplace=True)
 test.drop(delete_v, axis=1, inplace=True)
 
-
 ''' ----------------------------------'''
 ''' FIT THE MODELS -------------------'''
 ''' ----------------------------------'''
 # for validation
 from model.GBC import *
-from sklearn.metrics import classification_report, f1_score, confusion_matrix
-from sklearn.ensemble import GradientBoostingClassifier
+from util.logger import *
+# from sklearn.metrics import classification_report, f1_score, confusion_matrix
+# from sklearn.ensemble import GradientBoostingClassifier
 x_train, x_val, y_train, y_val = train_test_split(train.iloc[:,1:],train.Survived, test_size=0.3 ) 
 
-gbc_grid = gg.GBoost_gridsearch(x_train = x_train, y_train = y_train)
-update_dict = gbc_make_log(gbc_grid)
-make_log(update_dict,path_='C:/Users/10188/local_git/titanic/data/logging_female.json')
+'''GBC'''
+gbc_grid = GBoost_gridsearch(x_train = x_train, y_train = y_train)
+
+gbc_fit = GradientBoostingClassifier(criterion='friedman_mse',learning_rate=0.05, loss='deviance',
+max_depth=3, max_features='sqrt',
+min_samples_leaf=3, min_samples_split=3, n_estimators=500, subsample=0.6)
+gbc_fit.fit(x_train, y_train)
+
+gbc_dict = {}
+gbc_dict['GBC_']= {'time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'name': 'GradientBoosting', 
+'best_param':gbc_grid.best_params_,
+'cross_val_score_mean':cross_val_score(gbc_fit, x_val, y_val).mean()}
+
+update_dict = make_log(gbc_dict)
+make_log(gbc_dict,path_='C:/Users/10188/local_git/titanic/data/loggint_test.json')
+
+'''LGBM'''
+lgbm_grid = lgbm_gridsearch(x_train = x_train, y_train = y_train)
+
+lgbm_fit = GradientBoostingClassifier(criterion='friedman_mse',learning_rate=0.05, loss='deviance',
+max_depth=3, max_features='sqrt',
+min_samples_leaf=3, min_samples_split=3, n_estimators=500, subsample=0.6)
+lgbm_fit.fit(x_train, y_train)
+
+lgbm_dict = {}
+lgbm_dict['GBC_']= {'time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'name': 'GradientBoosting', 
+'best_param':lgbm_grid.best_params_,
+'cross_val_score_mean':cross_val_score(lgbm_fit, x_val, y_val).mean()}
+
+update_dict = make_log(lgbm_dict)
+make_log(lgbm_dict,path_='C:/Users/10188/local_git/titanic/data/loggint_test.json')
+
+# '''Catboost'''
+# lgbm_grid = lgbm_gridsearch(x_train = x_train, y_train = y_train)
+
+# lgbm_fit = GradientBoostingClassifier(criterion='friedman_mse',learning_rate=0.05, loss='deviance',
+# max_depth=3, max_features='sqrt',
+# min_samples_leaf=3, min_samples_split=3, n_estimators=500, subsample=0.6)
+# lgbm_fit.fit(x_train, y_train)
+
+# lgbm_dict = {}
+# lgbm_dict['GBC_']= {'time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'name': 'GradientBoosting', 
+# 'best_param':lgbm_grid.best_params_,
+# 'cross_val_score_mean':cross_val_score(lgbm_fit, x_val, y_val).mean()}
+
+# update_dict = make_log(lgbm_dict)
+# make_log(lgbm_dict,path_='C:/Users/10188/local_git/titanic/data/loggint_test.json')
